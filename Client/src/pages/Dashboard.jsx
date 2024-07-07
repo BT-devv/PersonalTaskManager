@@ -11,20 +11,22 @@ import Navbar from "../components/Navbar";
 
 const Dashboard = () => {
   const [columns, setColumns] = useState(Board);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [selectedColumn, setSelectedColumn] = useState("");
   const [addingStatus, setAddingStatus] = useState(false);
   const [newStatusName, setNewStatusName] = useState("");
   const [selectedTask, setSelectedTask] = useState(null);
   const [hoveredColumn, setHoveredColumn] = useState(null);
+  const [layout, setLayout] = useState("grid"); // State for layout
 
-  const openModal = (columnId) => {
+  const openAddModal = (columnId) => {
     setSelectedColumn(columnId);
-    setModalOpen(true);
+    setAddModalOpen(true);
   };
 
-  const closeModal = () => {
-    setModalOpen(false);
+  const closeAddModal = () => {
+    setAddModalOpen(false);
   };
 
   const openAddStatus = () => {
@@ -74,7 +76,7 @@ const Dashboard = () => {
 
   const openTaskDetail = (task) => {
     setSelectedTask(task);
-    setModalOpen(true);
+    setTaskDetailModalOpen(true);
   };
 
   const handleMouseEnter = (columnId) => {
@@ -85,11 +87,21 @@ const Dashboard = () => {
     setHoveredColumn(null);
   };
 
+  const handleLayoutChange = (layout) => {
+    setLayout(layout);
+  };
+
   return (
     <>
+      <Navbar projectName="Project Name" onLayoutChange={handleLayoutChange} />
+
       <DragDropContext onDragEnd={handleOnDragEnd}>
         <div className="h-screen overflow-auto px-5 pb-8">
-          <div className="w-full h-screen  flex items-start justify-start gap-5">
+          <div
+            className={`w-full h-screen flex items-start justify-start gap-5 ${
+              layout === "list" ? "flex-col" : ""
+            }`}
+          >
             {Object.entries(columns).map(([columnId, column]) => (
               <div
                 className="flex flex-col gap-5"
@@ -123,7 +135,7 @@ const Dashboard = () => {
                       {provided.placeholder}
                       {hoveredColumn === columnId && (
                         <div
-                          onClick={() => openModal(columnId)}
+                          onClick={() => openAddModal(columnId)}
                           className="flex cursor-pointer items-center justify-center gap-1 py-[5px] w-full opacity-90 bg-gray-300 rounded-lg shadow-sm text-[#000] font-medium text-[15px]"
                         >
                           <AddOutline color="#000" />
@@ -160,20 +172,17 @@ const Dashboard = () => {
         </div>
       </DragDropContext>
 
-      {selectedTask && (
+      {taskDetailModalOpen && selectedTask && (
         <TaskDetailModal
-          isOpen={modalOpen}
-          onClose={() => {
-            setModalOpen(false);
-            setSelectedTask(null);
-          }}
+          isOpen={taskDetailModalOpen}
+          onClose={() => setTaskDetailModalOpen(false)}
           task={selectedTask}
         />
       )}
       <AddModal
-        isOpen={modalOpen}
-        onClose={closeModal}
-        setOpen={setModalOpen}
+        isOpen={addModalOpen}
+        onClose={closeAddModal}
+        setOpen={setAddModalOpen}
         handleAddTask={handleAddTask}
       />
     </>

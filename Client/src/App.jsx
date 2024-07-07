@@ -20,11 +20,11 @@ function Layout() {
   const location = useLocation();
 
   return user ? (
-    <div className="w-screen h-screen overflow-hidden flex flex-col md:flex-row">
-      <div className="w-1/5 h-screen bg-[#ffffff] sticky top-0 hidden md:block">
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden">
+      <div className="w-full md:w-1/6 h-screen bg-white sticky top-0 hidden md:block">
         <Sidebar />
       </div>
-      <div className="w-full 2x1:px-10 ">
+      <div className="w-full md:w-5/6 ">
         <Outlet />
       </div>
     </div>

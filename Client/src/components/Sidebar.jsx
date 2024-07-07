@@ -30,7 +30,7 @@ const items = [
   {
     key: "grp",
     label: (
-      <div className="flex justify-between items-center w-1">
+      <div className="flex justify-between items-center w-full  ">
         <span>Space</span>
         <div className="flex space-x-1">
           <Dropdown
