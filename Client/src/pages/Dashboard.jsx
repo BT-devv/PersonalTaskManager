@@ -7,7 +7,7 @@ import AddModal from "../components/AddModal";
 import Task from "../components/Task";
 import TaskDetailModal from "../components/TaskDetailModal";
 import { BLACK } from "../constants/color";
-// import Navbar from "../components/Navbar";
+import Navbar from "../components/Navbar";
 
 const Dashboard = () => {
   const [columns, setColumns] = useState(Board);
@@ -88,7 +88,7 @@ const Dashboard = () => {
   return (
     <>
       <DragDropContext onDragEnd={handleOnDragEnd}>
-        <div className=" h-screen overflow-auto px-5 pb-8">
+        <div className="h-screen overflow-auto px-5 pb-8">
           <div className="w-full h-screen  flex items-start justify-start gap-5">
             {Object.entries(columns).map(([columnId, column]) => (
               <div

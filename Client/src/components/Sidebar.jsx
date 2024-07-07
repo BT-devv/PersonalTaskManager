@@ -48,7 +48,7 @@ const items = [
           >
             <Button
               type="link"
-              icon={<EllipsisOutlined className="text-gray-500" />}
+              icon={<EllipsisOutlined className="text-gray-500 " />}
               className="text-gray-500"
             />
           </Dropdown>
@@ -60,7 +60,8 @@ const items = [
       {
         key: "/space",
         label: (
-          <div className="">
+          <div className="flex gap-2">
+            <MdOutlineWorkspacePremium className="flex mt-3 text-sm" />
             <span>First Space </span>
           </div>
         ),
@@ -122,7 +123,7 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col ">
+    <div className="w-70 h-full flex flex-col ">
       <h1 className="flex gap-1 items-center p-5 bg-[#2a2b79]">
         <span className="text-2xl font-bold text-white">Task Manager</span>
         <p className="bg-blue-600 p-2 rounded-full">

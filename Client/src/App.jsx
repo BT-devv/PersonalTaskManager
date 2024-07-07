@@ -12,7 +12,6 @@ import Register from "./pages/Register";
 import Sidebar from "./components/Sidebar";
 import Search from "./pages/Search";
 import Notification from "./pages/Notification";
-// import Navbar from "./components/Navbar";
 import AssignToMe from "./pages/AssignToMe";
 // import { useState } from "react";
 
@@ -21,16 +20,12 @@ function Layout() {
   const location = useLocation();
 
   return user ? (
-    <div className="w-full h-screen overflow-hidden flex flex-col md:flex-row">
-      <div className="w-80 h-screen bg-[#ffffff] sticky top-0 hidden md:block">
+    <div className="w-screen h-screen overflow-hidden flex flex-col md:flex-row">
+      <div className="w-1/5 h-screen bg-[#ffffff] sticky top-0 hidden md:block">
         <Sidebar />
       </div>
-      {/* <MobileSidebar/> */}
-      <div className="flex-1  ">
-        {/* <Navbar /> */}
-        <div className=" 2x1:px-10 ">
-          <Outlet />
-        </div>
+      <div className="w-full 2x1:px-10 ">
+        <Outlet />
       </div>
     </div>
   ) : (
