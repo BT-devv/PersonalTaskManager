@@ -1,0 +1,29 @@
+.custom-segmented {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5); /* Internal shadow */
+  width: 18.2rem;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+.custom-segmented .ant-segmented-item {
+  position: relative;
+  margin-right: 4px; /* Optional: spacing between items */
+  transition: box-shadow 0.3s ease; /* Smooth transition for shadow */
+  white-space: nowrap; /* Ensure that text doesn't wrap */
+}
+
+.custom-segmented .ant-segmented-item:last-child {
+  margin-right: 0; /* Remove margin for the last item */
+}
+
+.custom-segmented .ant-segmented-item.ant-segmented-item-selected {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Shadow effect for selected item */
+  background: #ffffffb0;
+}
+
+.custom-segmented .ant-segmented-item .flex {
+  display: flex;
+  align-items: center;
+}

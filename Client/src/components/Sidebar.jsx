@@ -4,7 +4,7 @@ import {
   NotificationOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Menu, Button, Dropdown } from "antd";
+import { Menu, Button, Dropdown,Segmented } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
@@ -126,9 +126,9 @@ const Sidebar = () => {
     <div className="w-70 h-full flex flex-col ">
       <h1 className="flex justify-between gap-1 items-center p-5 bg-[#2a2b79]">
         <span className="text-2xl font-bold text-white">Task Manager</span>
-        <p className="bg-blue-600 p-2 rounded-full">
+        {/* <p className="bg-blue-600 p-2 rounded-full">
           <MdOutlineAddTask className="text-white text-2xl font-black" />
-        </p>
+        </p> */}
       </h1>
       <Menu
         className="w-full h-full top-0"

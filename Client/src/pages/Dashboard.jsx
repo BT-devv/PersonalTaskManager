@@ -19,6 +19,7 @@ const Dashboard = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [hoveredColumn, setHoveredColumn] = useState(null);
   const [layout, setLayout] = useState("grid"); // State for layout
+  const [editingStatusId, setEditingStatusId] = useState(null); // State for tracking which status is being edited
 
   const openAddModal = (columnId) => {
     setSelectedColumn(columnId);
@@ -44,7 +45,11 @@ const Dashboard = () => {
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      handleAddStatus(newStatusName);
+      if (editingStatusId) {
+        handleEditStatusName(editingStatusId, newStatusName);
+      } else {
+        handleAddStatus(newStatusName);
+      }
     } else if (e.key === "Escape") {
       cancelAddStatus();
     }
@@ -64,6 +69,13 @@ const Dashboard = () => {
     setNewStatusName("");
   };
 
+  const handleEditStatusName = (statusId, newName) => {
+    const updatedColumns = { ...columns };
+    updatedColumns[statusId].name = newName;
+    setColumns(updatedColumns);
+    setEditingStatusId(null);
+  };
+
   const handleAddTask = (taskData) => {
     const newBoard = { ...columns };
     newBoard[selectedColumn].items.push(taskData);
@@ -71,6 +83,8 @@ const Dashboard = () => {
   };
 
   const handleOnDragEnd = (result) => {
+    // This function ensures the tasks are only moved within the dashboard area
+    if (!result.destination) return;
     onDragEnd(result, columns, setColumns);
   };
 
@@ -89,6 +103,11 @@ const Dashboard = () => {
 
   const handleLayoutChange = (layout) => {
     setLayout(layout);
+  };
+
+  const startEditingStatus = (statusId) => {
+    setEditingStatusId(statusId);
+    setNewStatusName(columns[statusId].name); // Set current status name in input field
   };
 
   return (
@@ -116,8 +135,21 @@ const Dashboard = () => {
                       {...provided.droppableProps}
                       className="flex flex-col md:w-[290px] w-[250px] gap-3 items-center py-5"
                     >
-                      <div className="  flex items-center justify-start py-[5px] px-[10px] w-full bg-sky-500 rounded-lg shadow-md text-[#000] font-normal text-[15px]">
-                        {column.name}
+                      <div className="flex items-center justify-start py-[5px] px-[10px] w-full bg-sky-500 rounded-lg shadow-md text-[#000] font-normal text-[15px]">
+                        {editingStatusId === columnId ? (
+                          <input
+                            type="text"
+                            value={newStatusName}
+                            onChange={handleStatusNameChange}
+                            onKeyDown={handleKeyDown}
+                            className="border p-2 rounded"
+                            autoFocus
+                          />
+                        ) : (
+                          <div onClick={() => startEditingStatus(columnId)}>
+                            {column.name}
+                          </div>
+                        )}
                       </div>
                       {column.items.map((task, index) => (
                         <Draggable
