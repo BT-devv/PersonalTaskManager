@@ -4,9 +4,10 @@ import {
   NotificationOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Menu, Button, Dropdown,Segmented } from "antd";
+import { Menu, Button, Dropdown } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+
 
 const items = [
   {
