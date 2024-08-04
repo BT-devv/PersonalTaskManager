@@ -80,13 +80,11 @@ export const duplicateTask = async (req, res) => {
       task: newTask._id,
     });
 
-    res
-      .status(200)
-      .json({
-        status: true,
-        task: newTask,
-        message: "Task duplicated successfully.",
-      });
+    res.status(200).json({
+      status: true,
+      task: newTask,
+      message: "Task duplicated successfully.",
+    });
   } catch (error) {
     console.error(error);
     return res.status(400).json({ status: false, message: error.message });
@@ -257,6 +255,30 @@ export const updateTask = async (req, res) => {
     return res.status(400).json({ status: false, message: error.message });
   }
 };
+export const trashTask = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const task = await Task.findById(id);
+    if (!task) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Task not found." });
+    }
+
+    task.isTrashed = true;
+
+    await task.save();
+
+    res.status(200).json({
+      status: true,
+      message: `Task trashed successfully.`,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ status: false, message: "Server error." });
+  }
+};
 
 export const deleteRestoreTask = async (req, res) => {
   try {
@@ -268,15 +290,23 @@ export const deleteRestoreTask = async (req, res) => {
     } else if (actionType === "deleteAll") {
       await Task.deleteMany({ isTrashed: true });
     } else if (actionType === "restore") {
-      const resp = await Task.findById(id);
-
-      resp.isTrashed = false;
-      resp.save();
+      const task = await Task.findById(id);
+      if (!task) {
+        return res
+          .status(404)
+          .json({ status: false, message: "Task not found." });
+      }
+      task.isTrashed = false;
+      await task.save();
     } else if (actionType === "restoreAll") {
       await Task.updateMany(
         { isTrashed: true },
         { $set: { isTrashed: false } }
       );
+    } else {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid action type." });
     }
 
     res.status(200).json({
@@ -284,7 +314,7 @@ export const deleteRestoreTask = async (req, res) => {
       message: `Operation performed successfully.`,
     });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({ status: false, message: error.message });
+    console.error(error);
+    return res.status(500).json({ status: false, message: "Server error." });
   }
 };
