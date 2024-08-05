@@ -10,6 +10,7 @@ const userSchema = new Schema(
     password: { type: String, required: true },
     isAdmin: { type: Boolean, required: true, default: false },
     assignedTasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
+    isActive: { type: Boolean, required: true, default: true },
   },
   { timestamps: true }
 );
