@@ -34,7 +34,10 @@ export const updateProject = async (req, res) => {
 export const getProject = async (req, res) => {
   try {
     const { id } = req.params;
-    const project = await Project.findById(id);
+    const project = await Project.findById(id).populate(
+      "workspace",
+      "_id name description"
+    );
     res.status(200).json(project);
   } catch (error) {
     console.log(error);
@@ -44,7 +47,10 @@ export const getProject = async (req, res) => {
 
 export const getAllProjects = async (req, res) => {
   try {
-    const projects = await Project.find();
+    const projects = await Project.find().populate(
+      "workspace",
+      "_id name description"
+    );
     res.status(200).json(projects);
   } catch (error) {
     console.log(error);
