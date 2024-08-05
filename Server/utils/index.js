@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 
-const dbConnection = async () => {
+export const dbConnection = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("DB connection established");
@@ -21,4 +22,3 @@ export const createJWT = (res, userId) => {
     maxAge: 1 * 24 * 60 * 60 * 1000, //1 day
   });
 };
-export default dbConnection;

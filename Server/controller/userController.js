@@ -25,9 +25,7 @@ export const registerUser = async (req, res) => {
     });
 
     if (user) {
-      if (isAdmin) {
-        createJWT(res, user._id);
-      }
+      isAdmin ? createJWT(res, user._id) : null;
 
       user.password = undefined;
 
