@@ -9,7 +9,7 @@ import {
 
 const router = express.Router();
 
-router.post("/", createTaskStatus);
+router.post("/create", createTaskStatus);
 router.get("/", getTaskStatuses);
 router.get("/:id", getTaskStatus);
 router.put("/:id", updateTaskStatus);
