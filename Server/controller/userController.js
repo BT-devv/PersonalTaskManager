@@ -2,7 +2,7 @@ import User from "../models/user.js";
 import Notification from "../models/notification.js";
 import { createJWT } from "../utils/index.js";
 import mongoose from "mongoose";
-
+import bcrypt from "bcryptjs";
 // Register User
 export const registerUser = async (req, res) => {
   try {
