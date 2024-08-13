@@ -1,24 +1,27 @@
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 
+// Database connection function
 export const dbConnection = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log("DB connection established");
+    console.log("Database connection established successfully");
   } catch (error) {
-    console.log("Database error: " + error);
+    console.error("Database connection error:", error);
+    process.exit(1); // Exit the process with failure
   }
 };
+
+// JWT creation and cookie setup function
 export const createJWT = (res, userId) => {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: "1d",
   });
 
-  // Change sameSite from strict to none when you deploy your app
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV !== "development",
-    sameSite: "strict", //prevent CSRF attack
-    maxAge: 1 * 24 * 60 * 60 * 1000, //1 day
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict", // Adjust based on environment
+    maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
   });
 };

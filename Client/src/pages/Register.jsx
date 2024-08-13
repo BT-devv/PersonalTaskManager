@@ -1,9 +1,10 @@
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { useRegisterMutation } from "../redux/slices/apiSlice"; // Adjust the path if necessary
+import { setCredentials } from "../redux/slices/authSlice";
 import Textbox from "../components/Textbox";
 import Button from "../components/Button";
-import { useDispatch } from "react-redux";
-import { setCredentials } from "../redux/slices/authSlice";
 
 const Register = () => {
   const {
@@ -14,12 +15,17 @@ const Register = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [registerUser, { isLoading }] = useRegisterMutation();
 
   const submitHandler = async (data) => {
-    console.log("Register", data);
-    localStorage.setItem("userInfo", JSON.stringify(data));
-    dispatch(setCredentials(data));
-    navigate("/log-in");
+    try {
+      const userData = await registerUser(data).unwrap();
+      dispatch(setCredentials(userData));
+      localStorage.setItem("userInfo", JSON.stringify(userData));
+      navigate("/log-in");
+    } catch (error) {
+      console.error("Registration failed:", error);
+    }
   };
 
   return (
@@ -85,20 +91,9 @@ const Register = () => {
                 })}
                 error={errors.password ? errors.password.message : ""}
               />
-              <Textbox
-                placeholder="YYYY-MM-DD"
-                type="date"
-                name="dob"
-                label="Date of Birth"
-                className="w-full rounded-md"
-                register={register("dob", {
-                  required: "Date of Birth is required!",
-                })}
-                error={errors.dob ? errors.dob.message : ""}
-              />
               <Button
                 type="Submit"
-                label="Next"
+                label={isLoading ? "Registering..." : "Next"}
                 className="w-full h-12 bg-blue-700 text-white rounded-md"
               />
             </div>

@@ -1,15 +1,14 @@
-import bcrypt from "bcryptjs";
 import mongoose, { Schema } from "mongoose";
 
 const userSchema = new Schema(
   {
     name: { type: String, required: true },
-    title: { type: String },
-    role: { type: String },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    isAdmin: { type: Boolean, required: true, default: false },
-    assignedTasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
+    role: { type: String, enum: ["admin", "member"], default: "member" },
+    workspaces: [{ type: Schema.Types.ObjectId, ref: "Workspace" }], // nhiều-nhiều với Workspace
+    projects: [{ type: Schema.Types.ObjectId, ref: "Project" }], // nhiều-nhiều với Project
+    tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }], // nhiều-nhiều với Task
     isActive: { type: Boolean, required: true, default: true },
   },
   { timestamps: true }

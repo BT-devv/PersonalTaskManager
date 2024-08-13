@@ -6,6 +6,7 @@ import {
   deleteUserProfile,
   getNotificationsList,
   getTeamList,
+  getUser,
   loginUser,
   logoutUser,
   markNotificationRead,
@@ -15,21 +16,24 @@ import {
 
 const router = express.Router();
 
-router.post("/register", registerUser);
-router.post("/login", loginUser);
-router.post("/logout", logoutUser);
+// Public routes
+router.post("/register", registerUser); // Register a new user
+router.post("/login", loginUser); // Login an existing user
+router.post("/logout", logoutUser); // Logout the current user
 
-router.get("/get-team", protectRoute, isAdminRoute, getTeamList);
-router.get("/notifications", protectRoute, getNotificationsList);
+// Protected routes for authenticated users
+router.get("/profile/:id", protectRoute, getUser); // Get user profile by ID
+router.get("/team", protectRoute, isAdminRoute, getTeamList); // Get team list (Admin only)
+router.get("/notifications", protectRoute, getNotificationsList); // Get notifications for the logged-in user
 
-router.put("/profile", protectRoute, updateUserProfile);
-router.put("/read-noti", protectRoute, markNotificationRead);
-router.put("/change-password", protectRoute, changeUserPassword);
+router.put("/profile", protectRoute, updateUserProfile); // Update profile of the logged-in user
+router.put("/notifications/read", protectRoute, markNotificationRead); // Mark notifications as read
+router.put("/password/change", protectRoute, changeUserPassword); // Change the password of the logged-in user
 
-// FOR ADMIN ONLY - ADMIN ROUTES
+// Admin-only routes
 router
   .route("/:id")
-  .put(protectRoute, isAdminRoute, activateUserProfile)
-  .delete(protectRoute, isAdminRoute, deleteUserProfile);
+  .put(protectRoute, isAdminRoute, activateUserProfile) // Activate or deactivate a user profile (Admin only)
+  .delete(protectRoute, isAdminRoute, deleteUserProfile); // Delete a user profile (Admin only)
 
 export default router;

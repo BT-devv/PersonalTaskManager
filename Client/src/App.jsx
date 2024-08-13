@@ -13,6 +13,7 @@ import Sidebar from "./components/Sidebar";
 import Search from "./pages/Search";
 import Notification from "./pages/Notification";
 import AssignToMe from "./pages/AssignToMe";
+import AddProject from "./pages/AddProject";
 // import { useState } from "react";
 
 function Layout() {
@@ -48,14 +49,14 @@ function App() {
           <Route path="/workspaces" element={<WorkSpaces />} />
           <Route path="/space/space-setting" element={<WorkSpaces />} />
           <Route path="/workspaces/project/" element={<Project />} />
-          <Route path="/workspaces/add-project/" element={<Project />} />
+          <Route path="/workspaces/add-project/" element={<AddProject />} />
           <Route path="/workspaces/project/dashboard" element={<Dashboard />} />
           <Route path="/tasks" element={<Task />} />
           <Route path="/tasks/:id" element={<TaskDetail />} />
           <Route path="/to-do/:status" element={<Task />} />
           <Route path="/in-progress/:status" element={<Task />} />
           <Route path="/complete/:status" element={<Task />} />
-          <Route path="/user" element={<User />} />
+          <Route path="/user/:userId" element={<User />} />
         </Route>
         <Route path="/log-in" element={<Login />} />
         <Route path="/register" element={<Register />} />

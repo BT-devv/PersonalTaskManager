@@ -17,9 +17,9 @@ import Task from "../models/task.js"; // Import the Task model if you use it dir
 
 const router = express.Router();
 
-// Updated /create route with validation
+// Route to create a new task with validation
 router.post(
-  "/create",
+  "/",
   protectRoute,
   isAdminRoute,
   [
@@ -30,11 +30,10 @@ router.post(
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ status: false, errors: errors.array() });
     }
 
     try {
-      const { userId } = req.user;
       const { title, description, status, priority, due_date, project, users } =
         req.body;
 
@@ -56,23 +55,42 @@ router.post(
         message: "Task created successfully.",
       });
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ status: false, message: error.message });
+      console.error("Error in creating task:", error);
+      return res
+        .status(500)
+        .json({
+          status: false,
+          message: "Server error. Please try again later.",
+        });
     }
   }
 );
 
+// Route to duplicate an existing task
 router.post("/duplicate/:id", protectRoute, isAdminRoute, duplicateTask);
+
+// Route to post an activity related to a task
 router.post("/activity/:id", protectRoute, postTaskActivity);
 
+// Route to get dashboard statistics
 router.get("/dashboard", protectRoute, dashboardStatistics);
+
+// Route to get all tasks
 router.get("/", protectRoute, getTasks);
+
+// Route to get a single task by ID
 router.get("/:id", protectRoute, getTask);
 
-router.put("/create-subtask/:id", protectRoute, isAdminRoute, createSubTask);
-router.put("/update/:id", protectRoute, isAdminRoute, updateTask);
-router.put("/:id", protectRoute, isAdminRoute, trashTask);
+// Route to create a subtask under an existing task
+router.put("/subtask/:id", protectRoute, isAdminRoute, createSubTask);
 
+// Route to update an existing task
+router.put("/:id", protectRoute, isAdminRoute, updateTask);
+
+// Route to trash a task (soft delete)
+router.put("/trash/:id", protectRoute, isAdminRoute, trashTask);
+
+// Route to delete or restore a trashed task
 router.delete(
   "/delete-restore/:id?",
   protectRoute,

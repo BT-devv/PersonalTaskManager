@@ -4,8 +4,8 @@ const workspaceSchema = new Schema(
   {
     name: { type: String, required: true },
     description: { type: String },
-    users: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    projects: [{ type: Schema.Types.ObjectId, ref: "Project" }],
+    users: [{ type: Schema.Types.ObjectId, ref: "User" }], // nhiều-nhiều với User
+    projects: [{ type: Schema.Types.ObjectId, ref: "Project" }], // một-nhiều với Project
   },
   { timestamps: true }
 );

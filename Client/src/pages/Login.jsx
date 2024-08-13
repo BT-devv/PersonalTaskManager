@@ -1,13 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { useLoginMutation } from "../redux/slices/apiSlice"; // Adjust the path if necessary
 import Textbox from "../components/Textbox";
 import Button from "../components/Button";
-import { useSelector, useDispatch } from "react-redux";
 import { setCredentials } from "../redux/slices/authSlice";
 
 const Login = () => {
   const { user } = useSelector((state) => state.auth);
+  const [errorMessage, setErrorMessage] = useState("");
   const {
     register,
     handleSubmit,
@@ -16,24 +18,28 @@ const Login = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [login, { isLoading }] = useLoginMutation();
 
   const submitHandler = async (data) => {
-    console.log("Submit");
-    const storedUser = JSON.parse(localStorage.getItem("userInfo"));
-    if (
-      storedUser &&
-      storedUser.email === data.email &&
-      storedUser.password === data.password
-    ) {
-      dispatch(setCredentials(storedUser));
+    try {
+      const userData = await login(data).unwrap();
+      dispatch(setCredentials(userData));
+      localStorage.setItem("userInfo", JSON.stringify(userData));
       navigate("/workspaces/project/dashboard");
-    } else {
-      console.log("Invalid credentials");
+    } catch (error) {
+      console.error("Login failed:", error);
+      if (error?.status === 404) {
+        setErrorMessage("Account does not exist. Please sign up.");
+      } else if (error?.status === 401) {
+        setErrorMessage("Incorrect password. Please try again.");
+      } else {
+        setErrorMessage("Login failed. Please check your credentials.");
+      }
     }
   };
 
   useEffect(() => {
-    user && navigate("/workspaces/project/dashboard");
+    if (user) navigate("/workspaces/project/dashboard");
   }, [user, navigate]);
 
   return (
@@ -43,7 +49,7 @@ const Login = () => {
         <div className="h-full w-full lg:w-2/3 flex flex-col items-center justify-center">
           <div className="w-full md:max-w-lg 2xl:max-w-3xl flex flex-col items-center justify-center gap-5 md:gap-y-10 2xl:-mt-20">
             <span className="flex gap-1 py-1 px-3 border rounded-full text-sm md:text-base border-gray-300 text-gray-600">
-              Manage all your task in one place!
+              Manage all your tasks in one place!
             </span>
             <p className="flex flex-col gap-0 md:gap-4 text-4xl md:text-6xl 2xl:text-7xl font-black text-center text-blue-700">
               <span>Personal Task Manager</span>
@@ -60,10 +66,14 @@ const Login = () => {
               <p className="text-blue-600 text-3xl font-bold text-center">
                 Welcome to PTM!
               </p>
-              <p className="text-center text-base text-gray-700 ">
+              <p className="text-center text-base text-gray-700">
                 Keep all your tasks done.
               </p>
             </div>
+
+            {errorMessage && (
+              <p className="text-red-500 text-center">{errorMessage}</p>
+            )}
 
             <div className="flex flex-col gap-y-5">
               <Textbox
@@ -93,7 +103,7 @@ const Login = () => {
               </span>
               <Button
                 type="Submit"
-                label="Submit"
+                label={isLoading ? "Logging in..." : "Submit"}
                 className="w-full h-12 bg-blue-700 text-white rounded-md"
               />
             </div>

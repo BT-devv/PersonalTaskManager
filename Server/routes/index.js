@@ -7,10 +7,11 @@ import projectRoutes from "./projectRoutes.js";
 
 const router = express.Router();
 
-router.use("/user", userRoutes);
-router.use("/status", taskStatusRoutes);
-router.use("/task", taskRoutes);
-router.use("/workspace", workspaceRoutes);
-router.use("/project", projectRoutes);
+// Mounting routes with descriptive base paths
+router.use("/users", userRoutes); // Plural form for consistency
+router.use("/statuses", taskStatusRoutes); // More descriptive, plural form
+router.use("/tasks", taskRoutes); // Plural form for consistency
+router.use("/workspaces", workspaceRoutes); // Plural form for consistency
+router.use("/projects", projectRoutes); // Plural form for consistency
 
 export default router;

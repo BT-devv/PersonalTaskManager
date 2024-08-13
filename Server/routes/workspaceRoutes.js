@@ -10,10 +10,19 @@ import { protectRoute, isAdminRoute } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/create", protectRoute, createWorkspace);
-router.put("/update/:id", protectRoute, updateWorkspace);
+// Route to create a new workspace
+router.post("/", protectRoute, isAdminRoute, createWorkspace);
+
+// Route to update an existing workspace by ID
+router.put("/:id", protectRoute, isAdminRoute, updateWorkspace);
+
+// Route to get a specific workspace by ID
 router.get("/:id", protectRoute, getWorkspace);
+
+// Route to get all workspaces
 router.get("/", protectRoute, getAllWorkspaces);
-router.delete("/delete/:id", protectRoute, isAdminRoute, deleteWorkspace);
+
+// Route to delete a workspace by ID
+router.delete("/:id", protectRoute, isAdminRoute, deleteWorkspace);
 
 export default router;
