@@ -1,44 +1,70 @@
+import mongoose from "mongoose";
 import Notice from "../models/notification.js";
 import Task from "../models/task.js";
 import User from "../models/user.js";
+import Project from "../models/project.js";
 
 // Create a new Task
 export const createTask = async (req, res) => {
   try {
     const { title, description, status, priority, due_date, project, users } =
       req.body;
+    const userId = req.user._id;
 
     if (!title || !status || !priority || !project) {
-      return res
-        .status(400)
-        .json({
-          status: false,
-          message: "Title, status, priority, and project are required.",
-        });
+      return res.status(400).json({
+        status: false,
+        message: "Title, status, priority, and project are required.",
+      });
     }
 
+    // Validate project ID
+    if (!mongoose.Types.ObjectId.isValid(project)) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid project ID." });
+    }
+
+    // Check if the project exists
+    const projectExists = await Project.findById(project);
+    if (!projectExists) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Project not found." });
+    }
+
+    // Create the task
     const task = new Task({
       title,
       description,
       status,
       priority: priority.toLowerCase(),
       due_date,
-      project,
-      users,
+      project: project,
+      users: users || [userId], // Assign to provided users or the creator by default
     });
+
     await task.save();
+
+    // Add the task to the project's task list
+    projectExists.tasks.push(task._id);
+    await projectExists.save();
 
     const text = `New task "${title}" has been assigned to you in project "${project}". The task priority is set to ${priority.toLowerCase()}. Due date is ${new Date(
       due_date
     ).toDateString()}.`;
 
-    await Notice.create({ team: users, text, task: task._id });
+    await Notice.create({ team: task.users, text, task: task._id });
 
     res
       .status(201)
-      .json({ status: true, task, message: "Task created successfully." });
+      .json({
+        status: true,
+        task,
+        message: "Task created and associated with project successfully.",
+      });
   } catch (error) {
-    console.error(error);
+    console.error("Error in createTask:", error);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 };
@@ -47,12 +73,20 @@ export const createTask = async (req, res) => {
 export const duplicateTask = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user._id;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid task ID." });
+    }
 
     const task = await Task.findById(id);
-    if (!task) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Task not found." });
+    if (!task || !task.users.includes(userId)) {
+      return res.status(404).json({
+        status: false,
+        message: "Task not found or you do not have access.",
+      });
     }
 
     const newTask = new Task({
@@ -76,15 +110,13 @@ export const duplicateTask = async (req, res) => {
 
     await Notice.create({ team: task.users, text, task: newTask._id });
 
-    res
-      .status(201)
-      .json({
-        status: true,
-        task: newTask,
-        message: "Task duplicated successfully.",
-      });
+    res.status(201).json({
+      status: true,
+      task: newTask,
+      message: "Task duplicated successfully.",
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Error in duplicateTask:", error);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 };
@@ -95,6 +127,7 @@ export const updateTask = async (req, res) => {
     const { id } = req.params;
     const { title, description, status, priority, due_date, project, users } =
       req.body;
+    const userId = req.user._id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
@@ -103,10 +136,17 @@ export const updateTask = async (req, res) => {
     }
 
     const task = await Task.findById(id);
-    if (!task) {
+    if (!task || !task.users.includes(userId)) {
+      return res.status(404).json({
+        status: false,
+        message: "Task not found or you do not have access.",
+      });
+    }
+
+    if (project && !mongoose.Types.ObjectId.isValid(project)) {
       return res
-        .status(404)
-        .json({ status: false, message: "Task not found." });
+        .status(400)
+        .json({ status: false, message: "Invalid project ID." });
     }
 
     task.title = title || task.title;
@@ -123,7 +163,31 @@ export const updateTask = async (req, res) => {
       .status(200)
       .json({ status: true, message: "Task updated successfully." });
   } catch (error) {
-    console.error(error);
+    console.error("Error in updateTask:", error);
+    return res.status(500).json({ status: false, message: "Server error." });
+  }
+};
+
+// Get all Tasks in a specific Project
+export const getTasksByProject = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const userId = req.user._id;
+    console.log("Received projectId:", projectId); // Log the received projectId
+
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid project ID." });
+    }
+
+    const tasks = await Task.find({ project: projectId, users: userId })
+      .populate("users", "name title email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ status: true, tasks });
+  } catch (error) {
+    console.error("Error in getTasksByProject:", error);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 };
@@ -136,12 +200,16 @@ export const postTaskActivity = async (req, res) => {
     const userId = req.user._id;
 
     if (!type || !activity) {
+      return res.status(400).json({
+        status: false,
+        message: "Activity type and activity description are required.",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
         .status(400)
-        .json({
-          status: false,
-          message: "Activity type and activity description are required.",
-        });
+        .json({ status: false, message: "Invalid task ID." });
     }
 
     const task = await Task.findById(id);
@@ -158,7 +226,7 @@ export const postTaskActivity = async (req, res) => {
       .status(201)
       .json({ status: true, message: "Activity posted successfully." });
   } catch (error) {
-    console.error(error);
+    console.error("Error in postTaskActivity:", error);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 };
@@ -243,6 +311,7 @@ export const getTasks = async (req, res) => {
 export const getTask = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user._id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
@@ -254,15 +323,16 @@ export const getTask = async (req, res) => {
       .populate("users", "name title role email")
       .populate("activities.by", "name");
 
-    if (!task) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Task not found." });
+    if (!task || !task.users.includes(userId)) {
+      return res.status(404).json({
+        status: false,
+        message: "Task not found or you do not have access.",
+      });
     }
 
     res.status(200).json({ status: true, task });
   } catch (error) {
-    console.error(error);
+    console.error("Error in getTask:", error);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 };
@@ -302,6 +372,7 @@ export const createSubTask = async (req, res) => {
 export const trashTask = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user._id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
@@ -310,10 +381,11 @@ export const trashTask = async (req, res) => {
     }
 
     const task = await Task.findById(id);
-    if (!task) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Task not found." });
+    if (!task || !task.users.includes(userId)) {
+      return res.status(404).json({
+        status: false,
+        message: "Task not found or you do not have access.",
+      });
     }
 
     task.isTrashed = true;
@@ -323,7 +395,7 @@ export const trashTask = async (req, res) => {
       .status(200)
       .json({ status: true, message: "Task trashed successfully." });
   } catch (error) {
-    console.error(error);
+    console.error("Error in trashTask:", error);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 };
@@ -333,6 +405,7 @@ export const deleteRestoreTask = async (req, res) => {
   try {
     const { id } = req.params;
     const { actionType } = req.query;
+    const userId = req.user._id;
 
     if (!actionType) {
       return res
@@ -340,21 +413,25 @@ export const deleteRestoreTask = async (req, res) => {
         .json({ status: false, message: "Action type is required." });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid task ID." });
+    }
+
+    const task = await Task.findById(id);
+    if (!task || !task.users.includes(userId)) {
+      return res.status(404).json({
+        status: false,
+        message: "Task not found or you do not have access.",
+      });
+    }
+
     if (actionType === "delete") {
       await Task.findByIdAndDelete(id);
-    } else if (actionType === "deleteAll") {
-      await Task.deleteMany({ isTrashed: true });
     } else if (actionType === "restore") {
-      const task = await Task.findById(id);
-      if (!task) {
-        return res
-          .status(404)
-          .json({ status: false, message: "Task not found." });
-      }
       task.isTrashed = false;
       await task.save();
-    } else if (actionType === "restoreAll") {
-      await Task.updateMany({ isTrashed: true }, { isTrashed: false });
     } else {
       return res
         .status(400)
@@ -365,7 +442,7 @@ export const deleteRestoreTask = async (req, res) => {
       .status(200)
       .json({ status: true, message: "Operation performed successfully." });
   } catch (error) {
-    console.error(error);
+    console.error("Error in deleteRestoreTask:", error);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 };

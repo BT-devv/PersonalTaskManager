@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Project from "../models/project.js";
 
 // Create a new Project
@@ -54,8 +55,8 @@ export const updateProject = async (req, res) => {
 
     return res.status(200).json({ status: true, project });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server Error" });
+    console.error("Error in updateProject:", error);
+    return res.status(500).json({ status: false, message: error.message });
   }
 };
 
@@ -83,8 +84,8 @@ export const getProject = async (req, res) => {
 
     return res.status(200).json({ status: true, project });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server Error" });
+    console.error("Error in getProject:", error);
+    return res.status(500).json({ status: false, message: error.message });
   }
 };
 
@@ -106,8 +107,8 @@ export const getProjectsByUserId = async (req, res) => {
 
     return res.status(200).json({ status: true, projects });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server Error" });
+    console.error("Error in getProjectsByUserId:", error);
+    return res.status(500).json({ status: false, message: error.message });
   }
 };
 
@@ -149,7 +150,7 @@ export const deleteProject = async (req, res) => {
       .status(200)
       .json({ status: true, message: "Project deleted successfully" });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server Error" });
+    console.error("Error in deleteProject:", error);
+    return res.status(500).json({ status: false, message: error.message });
   }
 };

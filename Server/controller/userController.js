@@ -1,14 +1,16 @@
 import User from "../models/user.js";
-import Notification from "../models/notification.js";
+import Workspace from "../models/workspace.js";
+import Project from "../models/project.js";
+import Task from "../models/task.js";
+import TaskStatus from "../models/taskStatus.js";
+import bcrypt from "bcryptjs";
 import { createJWT } from "../utils/index.js";
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
-// Register User
+
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // Check if the email already exists
     const userExist = await User.findOne({ email });
 
     if (userExist) {
@@ -18,15 +20,118 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // Create new user
-    const user = new User({ name, email, password, role });
+    // const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create the user
+    const user = new User({
+      name,
+      email,
+      password,
+      role,
+    });
+
     await user.save();
 
-    user.password = undefined;
-    return res.status(201).json({ status: true, user });
+    // Create default task statuses associated with the user
+    const statuses = [
+      { name: "To Do", description: "Tasks to be done", user: user._id },
+      { name: "In Progress", description: "Tasks in progress", user: user._id },
+      { name: "Done", description: "Tasks that are completed", user: user._id },
+    ];
+
+    const createdStatuses = await TaskStatus.insertMany(statuses);
+
+    // Associate the created statuses with the user
+    user.taskStatuses = createdStatuses.map((status) => status._id);
+    await user.save();
+
+    // Create a default workspace
+    const workspace = new Workspace({
+      name: `${name}'s Workspace`,
+      description: "This is your personal workspace.",
+      users: [user._id],
+    });
+
+    await workspace.save();
+
+    // Create a default project within the workspace
+    const project = new Project({
+      name: "Sample Project",
+      description: "This is a sample project.",
+      workspace: workspace._id,
+      users: [user._id],
+    });
+
+    await project.save();
+
+    // Add the project to the workspace's projects array
+    workspace.projects.push(project._id);
+    await workspace.save();
+
+    // Create sample tasks in the project
+    const tasks = [
+      {
+        title: "Sample Task 1",
+        description: "This is a sample task in To Do.",
+        status: createdStatuses.find((status) => status.name === "To Do")._id,
+        project: project._id,
+        users: [user._id],
+      },
+      {
+        title: "Sample Task 2",
+        description: "This is a sample task in In Progress.",
+        status: createdStatuses.find((status) => status.name === "In Progress")
+          ._id,
+        project: project._id,
+        users: [user._id],
+      },
+      {
+        title: "Sample Task 3",
+        description: "This is a sample task in Done.",
+        status: createdStatuses.find((status) => status.name === "Done")._id,
+        project: project._id,
+        users: [user._id],
+      },
+    ];
+
+    const createdTasks = await Task.insertMany(tasks);
+
+    // Add the tasks to the project's tasks array
+    project.tasks = createdTasks.map((task) => task._id);
+    await project.save();
+
+    // Add references to user model
+    user.workspaces = [workspace._id];
+    user.projects = [project._id];
+    user.tasks = createdTasks.map((task) => task._id);
+
+    await user.save();
+
+    // Populate the user data with the created workspaces, projects, and tasks
+    const populatedUser = await User.findById(user._id)
+      .populate({
+        path: "workspaces",
+        populate: {
+          path: "projects",
+          populate: {
+            path: "tasks",
+          },
+        },
+      })
+      .populate("taskStatuses"); // Populate task statuses associated with the user
+
+    createJWT(res, user._id);
+
+    populatedUser.password = undefined; // Remove the password from the response
+
+    res.status(201).json({
+      status: true,
+      user: populatedUser,
+      message: "User registered successfully with default data.",
+    });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ status: false, message: "Server Error" });
+    return res.status(500).json({ status: false, message: error.message });
   }
 };
 
@@ -35,39 +140,40 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check if the user exists
-    const user = await User.findOne({ email }).select("+password");
-
+    // Ensure email is case insensitive
+    const user = await User.findOne({ email: email });
+    console.log("User found:", user); // Debugging
     if (!user) {
       return res
         .status(401)
         .json({ status: false, message: "Invalid email or password." });
     }
 
-    if (!user.isActive) {
-      return res.status(403).json({
-        status: false,
-        message:
-          "User account has been deactivated, contact the administrator.",
-      });
-    }
-
-    // Match the password
-    const isMatch = await user.matchPassword(password);
-
-    if (isMatch) {
-      createJWT(res, user._id);
-
-      user.password = undefined;
-      return res.status(200).json({ status: true, user });
-    } else {
+    // Compare the entered password with the hashed password in the database
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log("Password match:", isMatch); // Debugging
+    if (!isMatch) {
       return res
         .status(401)
-        .json({ status: false, message: "Invalid email or password" });
+        .json({ status: false, message: "Invalid email or password." });
     }
+
+    // If password matches, create a JWT and send it
+    createJWT(res, user._id);
+
+    user.password = undefined; // Remove the password from the response
+
+    return res.status(200).json({
+      status: true,
+      user,
+      message: "Login successful",
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server Error" });
+    console.error("Login error:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error. Please try again later.",
+    });
   }
 };
 
@@ -144,33 +250,44 @@ export const getNotificationsList = async (req, res) => {
 // Update User Profile
 export const updateUserProfile = async (req, res) => {
   try {
-    const { userId, isAdmin } = req.user;
-    const { _id } = req.body;
+    const { userId } = req.user; // Get the userId from the authenticated user
+    const { name, email, password, role } = req.body; // Get the updated fields from the request body
 
-    const id = isAdmin ? _id : userId;
+    // Find the user by ID
+    const user = await User.findById(userId);
 
-    const user = await User.findById(id);
-
-    if (user) {
-      user.name = req.body.name || user.name;
-      user.role = isAdmin ? req.body.role || user.role : user.role;
-      user.isActive =
-        req.body.isActive !== undefined ? req.body.isActive : user.isActive;
-
-      const updatedUser = await user.save();
-      updatedUser.password = undefined;
-
-      return res.status(200).json({
-        status: true,
-        message: "Profile updated successfully.",
-        user: updatedUser,
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found.",
       });
-    } else {
-      return res.status(404).json({ status: false, message: "User not found" });
     }
+
+    // Update the user's information
+    if (name) user.name = name;
+    if (email) user.email = email.toLowerCase(); // Ensure email is stored in lowercase
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user.password = hashedPassword; // Hash the new password before saving
+    }
+    if (role) user.role = role; // Optionally update the role if allowed
+
+    await user.save();
+
+    // Remove the password from the response
+    user.password = undefined;
+
+    res.status(200).json({
+      status: true,
+      user,
+      message: "Profile updated successfully.",
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server Error" });
+    console.error("Error updating user profile:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error. Please try again later.",
+    });
   }
 };
 

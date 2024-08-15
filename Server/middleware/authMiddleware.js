@@ -17,19 +17,21 @@ const protectRoute = async (req, res, next) => {
     }
 
     if (!token) {
+      console.log("No token provided");
       return res.status(401).json({
         status: false,
         message: "No token provided. Not authorized.",
       });
     }
 
+    // Log the token for debugging purposes
+    // console.log("Token provided:", token);
+
     // Verify the token
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
     // Find the user by ID and select necessary fields
-    const user = await User.findById(decodedToken.userId).select(
-      "email isAdmin"
-    );
+    const user = await User.findById(decodedToken.userId).select("email role");
 
     if (!user) {
       return res.status(401).json({
@@ -42,7 +44,7 @@ const protectRoute = async (req, res, next) => {
     req.user = {
       _id: user._id,
       email: user.email,
-      isAdmin: user.isAdmin,
+      role: user.role, // Attach the role instead of isAdmin
     };
 
     next();
@@ -57,7 +59,8 @@ const protectRoute = async (req, res, next) => {
 
 // Middleware to check if the user is an admin
 const isAdminRoute = (req, res, next) => {
-  if (req.user && req.user.isAdmin) {
+  if (req.user && req.user.role === "admin") {
+    // Check if the user's role is "admin"
     next();
   } else {
     return res.status(403).json({

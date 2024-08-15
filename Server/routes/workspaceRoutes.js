@@ -11,7 +11,7 @@ import { protectRoute, isAdminRoute } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // Route to create a new workspace
-router.post("/", protectRoute, isAdminRoute, createWorkspace);
+router.post("/", protectRoute, createWorkspace);
 
 // Route to update an existing workspace by ID
 router.put("/:id", protectRoute, isAdminRoute, updateWorkspace);

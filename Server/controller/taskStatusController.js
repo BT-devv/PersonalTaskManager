@@ -1,27 +1,29 @@
+import mongoose from "mongoose";
 import TaskStatus from "../models/taskStatus.js";
+import User from "../models/user.js";
+import Task from "../models/task.js";
 
 // Create a new Task Status
 export const createTaskStatus = async (req, res) => {
   try {
     const { name, description } = req.body;
+    const userId = req.user._id; // Assuming you have user ID in req.user from middleware
 
-    // Validate required fields
-    if (!name) {
-      return res
-        .status(400)
-        .json({ status: false, message: "Name is required." });
-    }
-
-    // Check for existing status
-    const existingStatus = await TaskStatus.findOne({ name });
+    const existingStatus = await TaskStatus.findOne({ name, user: userId });
     if (existingStatus) {
-      return res
-        .status(409)
-        .json({ status: false, message: "Status already exists." });
+      return res.status(400).json({
+        status: false,
+        message: "Status already exists for this user.",
+      });
     }
 
-    const taskStatus = new TaskStatus({ name, description });
+    const taskStatus = new TaskStatus({ name, description, user: userId });
     await taskStatus.save();
+
+    // Update the user's taskStatuses array
+    const user = await User.findById(userId);
+    user.taskStatuses.push(taskStatus._id);
+    await user.save();
 
     res.status(201).json({
       status: true,
@@ -29,22 +31,23 @@ export const createTaskStatus = async (req, res) => {
       message: "Task status created successfully.",
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server error." });
+    console.log(error);
+    return res.status(400).json({ status: false, message: error.message });
   }
 };
 
-// Get all Task Statuses
+// Get all Task Statuses by user
 export const getTaskStatuses = async (req, res) => {
   try {
-    const taskStatuses = await TaskStatus.find().sort({ name: 1 });
+    const userId = req.user._id;
+
+    const taskStatuses = await TaskStatus.find({ user: userId });
     res.status(200).json({ status: true, taskStatuses });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server error." });
+    console.log(error);
+    return res.status(400).json({ status: false, message: error.message });
   }
 };
-
 // Get a single Task Status by ID
 export const getTaskStatus = async (req, res) => {
   try {
@@ -63,8 +66,12 @@ export const getTaskStatus = async (req, res) => {
         .status(404)
         .json({ status: false, message: "Task status not found." });
     }
+    const tasks = await Task.find({ status: id }).populate(
+      "users",
+      "name title email"
+    );
 
-    res.status(200).json({ status: true, taskStatus });
+    res.status(200).json({ status: true, taskStatus, tasks });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ status: false, message: "Server error." });
@@ -76,19 +83,15 @@ export const updateTaskStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description } = req.body;
+    const userId = req.user._id;
 
-    // Validate ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res
-        .status(400)
-        .json({ status: false, message: "Invalid status ID." });
-    }
+    const taskStatus = await TaskStatus.findOne({ _id: id, user: userId });
 
-    const taskStatus = await TaskStatus.findById(id);
     if (!taskStatus) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Task status not found." });
+      return res.status(404).json({
+        status: false,
+        message: "Task status not found for this user.",
+      });
     }
 
     taskStatus.name = name || taskStatus.name;
@@ -102,8 +105,8 @@ export const updateTaskStatus = async (req, res) => {
       message: "Task status updated successfully.",
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server error." });
+    console.log(error);
+    return res.status(400).json({ status: false, message: error.message });
   }
 };
 
@@ -111,28 +114,30 @@ export const updateTaskStatus = async (req, res) => {
 export const deleteTaskStatus = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user._id;
 
-    // Validate ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res
-        .status(400)
-        .json({ status: false, message: "Invalid status ID." });
-    }
+    const taskStatus = await TaskStatus.findOneAndDelete({
+      _id: id,
+      user: userId,
+    });
 
-    const taskStatus = await TaskStatus.findById(id);
     if (!taskStatus) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Task status not found." });
+      return res.status(404).json({
+        status: false,
+        message: "Task status not found for this user.",
+      });
     }
 
-    await taskStatus.remove();
+    // Update the user's taskStatuses array
+    await User.findByIdAndUpdate(userId, {
+      $pull: { taskStatuses: id },
+    });
 
     res
       .status(200)
       .json({ status: true, message: "Task status deleted successfully." });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server error." });
+    console.log(error);
+    return res.status(400).json({ status: false, message: error.message });
   }
 };

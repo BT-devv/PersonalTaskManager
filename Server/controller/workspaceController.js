@@ -1,23 +1,41 @@
+import User from "../models/user.js";
 import Workspace from "../models/workspace.js";
 
 // Create a new Workspace
 export const createWorkspace = async (req, res) => {
   try {
     const { name, description } = req.body;
+    const userId = req.user._id; // Ensure req.user is correctly set
 
-    if (!name) {
+    if (!userId) {
       return res
         .status(400)
-        .json({ status: false, message: "Name is required" });
+        .json({ status: false, message: "User ID is missing" });
     }
 
-    const workspace = new Workspace({ name, description });
+    // Create a new workspace associated with the user
+    const workspace = new Workspace({
+      name,
+      description,
+      users: [userId],
+    });
+
     await workspace.save();
 
-    return res.status(201).json({ status: true, workspace });
+    // Retrieve the user and ensure they are found
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
+    }
+
+    // Associate the workspace with the user
+    user.workspaces.push(workspace._id);
+    await user.save();
+
+    res.status(201).json({ status: true, workspace });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server Error" });
+    console.error("Error in createWorkspace:", error);
+    res.status(500).json({ status: false, message: error.message });
   }
 };
 
@@ -47,8 +65,8 @@ export const updateWorkspace = async (req, res) => {
 
     return res.status(200).json({ status: true, workspace });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server Error" });
+    console.error("Error in updateWorkspace:", error);
+    return res.status(500).json({ status: false, message: error.message });
   }
 };
 
@@ -73,20 +91,23 @@ export const getWorkspace = async (req, res) => {
 
     return res.status(200).json({ status: true, workspace });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server Error" });
+    console.error("Error in getWorkspace:", error);
+    return res.status(500).json({ status: false, message: error.message });
   }
 };
 
 // Get all Workspaces
 export const getAllWorkspaces = async (req, res) => {
   try {
-    const workspaces = await Workspace.find().sort({ createdAt: -1 });
+    // Optionally, you might want to filter workspaces associated with the user
+    const workspaces = await Workspace.find({ users: req.user._id }).sort({
+      createdAt: -1,
+    });
 
     return res.status(200).json({ status: true, workspaces });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server Error" });
+    console.error("Error in getAllWorkspaces:", error);
+    return res.status(500).json({ status: false, message: error.message });
   }
 };
 
@@ -109,11 +130,17 @@ export const deleteWorkspace = async (req, res) => {
         .json({ status: false, message: "Workspace not found" });
     }
 
+    // Optionally remove the workspace from users
+    await User.updateMany(
+      { workspaces: workspace._id },
+      { $pull: { workspaces: workspace._id } }
+    );
+
     return res
       .status(200)
       .json({ status: true, message: "Workspace deleted successfully" });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ status: false, message: "Server Error" });
+    console.error("Error in deleteWorkspace:", error);
+    return res.status(500).json({ status: false, message: error.message });
   }
 };

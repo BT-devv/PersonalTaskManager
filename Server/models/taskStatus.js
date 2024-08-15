@@ -1,12 +1,12 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose from "mongoose";
 
-const taskStatusSchema = new Schema(
+const taskStatusSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
     description: { type: String },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to the user
   },
   { timestamps: true }
 );
 
-const TaskStatus = mongoose.model("TaskStatus", taskStatusSchema);
-export default TaskStatus;
+export default mongoose.model("TaskStatus", taskStatusSchema);
