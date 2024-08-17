@@ -5,6 +5,8 @@ import {
   getWorkspace,
   getAllWorkspaces,
   deleteWorkspace,
+  getWorkspacesByUser,
+  getWorkspaceByUser,
 } from "../controller/workspaceController.js";
 import { protectRoute, isAdminRoute } from "../middleware/authMiddleware.js";
 
@@ -25,4 +27,10 @@ router.get("/", protectRoute, getAllWorkspaces);
 // Route to delete a workspace by ID
 router.delete("/:id", protectRoute, isAdminRoute, deleteWorkspace);
 
+router.get("/user/:userId", protectRoute, getWorkspacesByUser);
+router.get(
+  "/user/:userId/workspace/:workspaceId",
+  protectRoute,
+  getWorkspaceByUser
+);
 export default router;

@@ -28,7 +28,9 @@ const protectRoute = async (req, res, next) => {
     // console.log("Token provided:", token);
 
     // Verify the token
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
 
     // Find the user by ID and select necessary fields
     const user = await User.findById(decodedToken.userId).select("email role");

@@ -3,7 +3,7 @@ import {
   useFetchUserQuery,
   useUpdateUserMutation,
   useLogoutMutation,
-} from "../redux/slices/apiSlice";
+} from "../redux/slices/userAPISlice";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { logout as logoutAction } from "../redux/slices/authSlice";

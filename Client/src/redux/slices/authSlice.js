@@ -4,7 +4,7 @@ const initialState = {
   user: localStorage.getItem("userInfo")
     ? JSON.parse(localStorage.getItem("userInfo"))
     : null,
-  isSidebarOpen: false,
+  token: localStorage.getItem("token") || null,
 };
 
 const authSlice = createSlice({
@@ -12,19 +12,19 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials: (state, action) => {
-      state.user = action.payload;
-      localStorage.setItem("userInfo", JSON.stringify(action.payload));
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      localStorage.setItem("userInfo", JSON.stringify(action.payload.user));
+      localStorage.setItem("token", action.payload.token);
     },
     logout: (state) => {
       state.user = null;
+      state.token = null;
       localStorage.removeItem("userInfo");
-    },
-    setOpenSidebar: (state, action) => {
-      state.isSidebarOpen = action.payload;
+      localStorage.removeItem("token");
     },
   },
 });
 
-export const { setCredentials, logout, setOpenSidebar } = authSlice.actions;
-
+export const { setCredentials, logout } = authSlice.actions;
 export default authSlice.reducer;

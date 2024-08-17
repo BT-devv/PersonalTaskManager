@@ -20,9 +20,6 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create the user
     const user = new User({
       name,
       email,
@@ -118,15 +115,16 @@ export const registerUser = async (req, res) => {
           },
         },
       })
-      .populate("taskStatuses"); // Populate task statuses associated with the user
+      .populate("taskStatuses");
 
-    createJWT(res, user._id);
+    const token = createJWT(res, user._id); // Generate token
 
-    populatedUser.password = undefined; // Remove the password from the response
+    populatedUser.password = undefined;
 
     res.status(201).json({
       status: true,
       user: populatedUser,
+      token, // Include the token in the response
       message: "User registered successfully with default data.",
     });
   } catch (error) {
@@ -158,14 +156,14 @@ export const loginUser = async (req, res) => {
         .json({ status: false, message: "Invalid email or password." });
     }
 
-    // If password matches, create a JWT and send it
-    createJWT(res, user._id);
+    const token = createJWT(res, user._id); // Generate token
 
-    user.password = undefined; // Remove the password from the response
+    user.password = undefined;
 
     return res.status(200).json({
       status: true,
       user,
+      token, // Include the token in the response
       message: "Login successful",
     });
   } catch (error) {

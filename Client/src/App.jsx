@@ -17,6 +17,8 @@ import Search from "./pages/Search";
 import Notification from "./pages/Notification";
 import AssignToMe from "./pages/AssignToMe";
 import UserProfile from "./pages/User";
+import WorkspaceList from "./pages/WorkspaceList";
+import CreateWorkspace from "./pages/CreateWorkspace";
 
 // Layout Component
 function Layout() {
@@ -50,10 +52,8 @@ function App() {
         <Route element={<Layout />}>
           {/* Default redirect to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" />} />
-
           {/* Dashboard */}
           <Route path="/dashboard" element={<Dashboard />} />
-
           {/* Workspaces and Projects */}
           <Route path="/workspaces" element={<WorkSpaces />} />
           <Route
@@ -68,14 +68,16 @@ function App() {
             path="/workspaces/:workspaceId/projects/add"
             element={<AddProject />}
           />
-
+          <Route path="/workspacesList" element={<WorkspaceList />} />{" "}
+          {/* Workspace selection */}
+          <Route path="/workspaces/create" element={<CreateWorkspace />} />{" "}
+          {/* Create new workspace */}
           {/* Tasks */}
           <Route path="/projects/:projectId/tasks" element={<TaskList />} />
           <Route
             path="/projects/:projectId/tasks/:taskId"
             element={<TaskDetail />}
           />
-
           {/* Miscellaneous */}
           <Route path="/search" element={<Search />} />
           <Route path="/notifications" element={<Notification />} />

@@ -30,7 +30,7 @@ const items = [
   {
     key: "grp",
     label: (
-      <div className="flex justify-between items-center w-full  ">
+      <div className="flex justify-between items-center w-full">
         <span>Space</span>
         <div className="flex space-x-1">
           <Dropdown
@@ -48,7 +48,7 @@ const items = [
           >
             <Button
               type="link"
-              icon={<EllipsisOutlined className="text-gray-500 " />}
+              icon={<EllipsisOutlined className="text-gray-500" />}
               className="text-gray-500"
             />
           </Dropdown>
@@ -62,7 +62,7 @@ const items = [
         label: (
           <div className="flex gap-2">
             <MdOutlineWorkspacePremium className="flex mt-3 text-sm" />
-            <span>First Space </span>
+            <span>First Space</span>
           </div>
         ),
       },
@@ -82,7 +82,7 @@ const items = [
         key: "/workspaces/add-project/",
         label: (
           <div className="text-gray-500">
-            <span>Add Project </span>
+            <span>Add Project</span>
           </div>
         ),
       },
@@ -99,7 +99,7 @@ const Sidebar = () => {
         navigate("/search");
         break;
       case "/notification":
-        navigate("/notification");
+        navigate("/notifications");
         break;
       case "/assign-to-me":
         navigate("/assign-to-me");
@@ -108,7 +108,7 @@ const Sidebar = () => {
         navigate("/space/space-setting");
         break;
       case "/workspaces/project/dashboard":
-        navigate("/workspaces/project/dashboard");
+        navigate("/dashboard");
         break;
       case "/tasks":
         navigate("/tasks");
@@ -119,16 +119,19 @@ const Sidebar = () => {
       case "/space":
         console.log("Hello");
         break;
+      default:
+        break;
     }
   };
 
+  const handleProfileClick = () => {
+    navigate("/user/:userId"); // Navigate to the User page
+  };
+
   return (
-    <div className="w-70 h-full flex flex-col ">
+    <div className="w-70 h-full flex flex-col">
       <h1 className="flex justify-between gap-1 items-center p-5 bg-[#2a2b79]">
         <span className="text-2xl font-bold text-white">Task Manager</span>
-        {/* <p className="bg-blue-600 p-2 rounded-full">
-          <MdOutlineAddTask className="text-white text-2xl font-black" />
-        </p> */}
       </h1>
       <Menu
         className="w-full h-full top-0"
@@ -137,7 +140,10 @@ const Sidebar = () => {
         defaultOpenKeys={["/workspaces/project/dashboard"]}
         items={items}
       />
-      <div className="flex items-center p-4 border border-gray-200">
+      <div
+        className="flex items-center p-4 border border-gray-200 cursor-pointer"
+        onClick={handleProfileClick} // Add click event to navigate to the User page
+      >
         <span className="text-gray-800 font-medium">User profile</span>
       </div>
     </div>

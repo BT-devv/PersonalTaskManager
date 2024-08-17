@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import User from "../models/user.js";
 import Workspace from "../models/workspace.js";
 
@@ -142,5 +143,63 @@ export const deleteWorkspace = async (req, res) => {
   } catch (error) {
     console.error("Error in deleteWorkspace:", error);
     return res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+// Get all Workspaces by User ID
+export const getWorkspacesByUser = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid user ID." });
+    }
+
+    const workspaces = await Workspace.find({ users: userId });
+
+    if (!workspaces || workspaces.length === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: "No workspaces found for this user." });
+    }
+
+    res.status(200).json({ status: true, workspaces });
+  } catch (error) {
+    console.error("Error in getWorkspacesByUser:", error);
+    return res.status(500).json({ status: false, message: "Server error." });
+  }
+};
+
+// Get a single Workspace by User ID
+export const getWorkspaceByUser = async (req, res) => {
+  try {
+    const { userId, workspaceId } = req.params;
+
+    if (
+      !mongoose.Types.ObjectId.isValid(userId) ||
+      !mongoose.Types.ObjectId.isValid(workspaceId)
+    ) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid user ID or workspace ID." });
+    }
+
+    const workspace = await Workspace.findOne({
+      _id: workspaceId,
+      users: userId,
+    });
+
+    if (!workspace) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Workspace not found for this user." });
+    }
+
+    res.status(200).json({ status: true, workspace });
+  } catch (error) {
+    console.error("Error in getWorkspaceByUser:", error);
+    return res.status(500).json({ status: false, message: "Server error." });
   }
 };
